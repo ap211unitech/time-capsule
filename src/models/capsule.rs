@@ -52,7 +52,7 @@ pub trait CapsuleTrait {
     async fn get_capsules_by_public_id(
         db: &Database,
         public_id: &str,
-    ) -> Result<CapsuleModel, Error>;
+    ) -> Result<Option<CapsuleModel>, Error>;
 }
 
 impl CapsuleTrait for CapsuleModel {
@@ -100,17 +100,11 @@ impl CapsuleTrait for CapsuleModel {
     async fn get_capsules_by_public_id(
         db: &Database,
         public_id: &str,
-    ) -> Result<CapsuleModel, Error> {
+    ) -> Result<Option<CapsuleModel>, Error> {
         let collection = db.collection::<CapsuleModel>("capsule");
 
         let result = collection.find_one(doc! {"public_id":public_id}).await?;
 
-        match result {
-            Some(capsule) => Ok(capsule),
-            None => Err(Error::from(std::io::Error::new(
-                std::io::ErrorKind::NotFound,
-                format!("Capsule with public_id {} not found", public_id),
-            ))),
-        }
+        Ok(result)
     }
 }

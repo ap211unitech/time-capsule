@@ -27,7 +27,7 @@ pub async fn get_capsules_by_public_id(
     Path(public_id): Path<String>,
     Extension(app_state): Extension<AppState>,
 ) -> Result<impl IntoResponse, AppError> {
-    let capsules = CapsuleModel::get_capsules_by_public_id(&app_state.db, &public_id)
+    let capsule = CapsuleModel::get_capsules_by_public_id(&app_state.db, &public_id)
         .await
         .map_err(|err| {
             AppError::new(
@@ -36,7 +36,13 @@ pub async fn get_capsules_by_public_id(
             )
         })?;
 
-    Ok((StatusCode::OK, Json(capsules)))
+    match capsule {
+        Some(capsule) => Ok(Json(capsule)),
+        None => Err(AppError::new(
+            StatusCode::NOT_FOUND,
+            format!("Capsule with public_id {} not found", public_id),
+        )),
+    }
 }
 
 pub async fn create_capsule(
