@@ -1,4 +1,4 @@
-use axum::{http::StatusCode, response::IntoResponse, Extension, Json};
+use axum::{extract::Path, http::StatusCode, response::IntoResponse, Extension, Json};
 use validator::Validate;
 
 use crate::{
@@ -12,6 +12,22 @@ pub async fn get_capsules(
     Extension(app_state): Extension<AppState>,
 ) -> Result<impl IntoResponse, AppError> {
     let capsules = CapsuleModel::get_capsules(&app_state.db)
+        .await
+        .map_err(|err| {
+            AppError::new(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                format!("Database Error: {}", err),
+            )
+        })?;
+
+    Ok((StatusCode::OK, Json(capsules)))
+}
+
+pub async fn get_capsules_by_public_id(
+    Path(public_id): Path<String>,
+    Extension(app_state): Extension<AppState>,
+) -> Result<impl IntoResponse, AppError> {
+    let capsules = CapsuleModel::get_capsules_by_public_id(&app_state.db, &public_id)
         .await
         .map_err(|err| {
             AppError::new(
